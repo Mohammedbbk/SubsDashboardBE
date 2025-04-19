@@ -1,5 +1,10 @@
+asgiref==3.8.1
 black==25.1.0
 click==8.1.8
+dj-database-url==2.3.0
+Django==5.2
+django-cors-headers==4.7.0
+djangorestframework==3.16.0
 flake8==7.2.0
 gunicorn==23.0.0
 mccabe==0.7.0
@@ -7,5 +12,11 @@ mypy-extensions==1.0.0
 packaging==25.0
 pathspec==0.12.1
 platformdirs==4.3.7
+psycopg2-binary==2.9.10
 pycodestyle==2.13.0
 pyflakes==3.3.2
+python-dateutil==2.9.0.post0
+python-dotenv==1.1.0
+six==1.17.0
+sqlparse==0.5.3
+typing_extensions==4.13.2

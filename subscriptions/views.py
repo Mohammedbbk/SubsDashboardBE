@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework import generics, status
+from rest_framework import generics, status, serializers
 from rest_framework.response import Response
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
@@ -31,12 +31,16 @@ class SubscriptionListCreate(generics.ListCreateAPIView):
             renewal_date = start_date + relativedelta(years=1)
 
         if renewal_date and renewal_date <= timezone.now().date():
-            pass
+            raise serializers.ValidationError({
+                "renewal_date": f"Calculated renewal date ({renewal_date}) must be in the future."
+            })
 
         if renewal_date:
             serializer.save(renewal_date=renewal_date, start_date=start_date)
         else:
-            super().perform_create(serializer)
+            raise serializers.ValidationError({
+                "billing_cycle": "Could not calculate renewal date based on billing cycle."
+            })
 
 
 class SubscriptionDestroy(generics.DestroyAPIView):

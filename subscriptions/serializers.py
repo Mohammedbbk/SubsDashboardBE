@@ -20,6 +20,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             "renewal_date",
             "monthly_cost",
             "annual_cost",
+            "annual_cost_option",
         ]
         read_only_fields = ["id", "renewal_date", "monthly_cost", "annual_cost"]
 

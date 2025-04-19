@@ -1,0 +1,17 @@
+.DS_Store
+*.local
+.env
+.env.*
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+db.sqlite3 
+venv/
+env/
+*.egg-info/
+staticfiles/
+media/
+
+

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from decimal import Decimal
 from .models import Subscription
+from .models import PriceHistory
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
@@ -39,3 +40,15 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         elif obj.billing_cycle == Subscription.ANNUALLY:
             return obj.cost
         return None
+
+class PriceHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PriceHistory
+        fields = ['id', 'subscription', 'cost', 'billing_cycle', 'effective_date']
+
+class SubscriptionPriceUpdateSerializer(serializers.Serializer):
+    cost = serializers.DecimalField(max_digits=10, decimal_places=2, required=True)
+    billing_cycle = serializers.ChoiceField(
+        choices=Subscription.BILLING_CYCLE_CHOICES, required=False
+    )
+    # optional cycle change

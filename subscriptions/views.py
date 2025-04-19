@@ -7,8 +7,8 @@ from django.db.models import Sum, Case, When, DecimalField, F
 from rest_framework.views import APIView
 from decimal import Decimal
 
-from .models import Subscription
-from .serializers import SubscriptionSerializer
+from .models import Subscription, PriceHistory
+from .serializers import SubscriptionSerializer, PriceHistorySerializer, SubscriptionPriceUpdateSerializer
 
 
 class SubscriptionListCreate(generics.ListCreateAPIView):
@@ -43,7 +43,14 @@ class SubscriptionListCreate(generics.ListCreateAPIView):
             )
 
         if renewal_date:
-            serializer.save(renewal_date=renewal_date, start_date=start_date)
+            subscription_instance = serializer.save(renewal_date=renewal_date, start_date=start_date)
+            # Record initial price history
+            PriceHistory.objects.create(
+                subscription=subscription_instance,
+                cost=subscription_instance.cost,
+                billing_cycle=subscription_instance.billing_cycle,
+                effective_date=subscription_instance.start_date
+            )
         else:
             raise serializers.ValidationError(
                 {
@@ -67,11 +74,10 @@ class DashboardSummaryView(APIView):
     Provides summary data for the dashboard, calculated via annotations.
     """
     def get(self, request, format=None):
-        # Calculate total monthly spend using database aggregation
         monthly_cost_expression = Case(
             When(billing_cycle=Subscription.ANNUALLY, then=F('cost') / 12),
             When(billing_cycle=Subscription.MONTHLY, then=F('cost')),
-            default=Decimal(0),  # Handle potential other cases or nulls
+            default=Decimal(0),
             output_field=DecimalField(max_digits=10, decimal_places=2)
         )
 
@@ -88,3 +94,44 @@ class DashboardSummaryView(APIView):
             'total_monthly_spend': total_monthly_spend.quantize(Decimal("0.01")),
         }
         return Response(summary_data)
+
+
+class SubscriptionUpdatePriceView(generics.GenericAPIView):
+    """Endpoint to update a subscription's cost and optionally billing cycle, recording history."""
+    queryset = Subscription.objects.all()
+    serializer_class = SubscriptionPriceUpdateSerializer
+
+    def post(self, request, *args, **kwargs):
+        subscription = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        new_cost = serializer.validated_data['cost']
+        new_billing_cycle = serializer.validated_data.get('billing_cycle', subscription.billing_cycle)
+
+        if new_cost == subscription.cost and new_billing_cycle == subscription.billing_cycle:
+            return Response({"message": "No change in price or billing cycle."}, status=status.HTTP_200_OK)
+
+        # Update subscription and record history
+        subscription.cost = new_cost
+        subscription.billing_cycle = new_billing_cycle
+        subscription.save()
+
+        PriceHistory.objects.create(
+            subscription=subscription,
+            cost=new_cost,
+            billing_cycle=new_billing_cycle,
+            effective_date=timezone.now().date()
+        )
+
+        response_serializer = SubscriptionSerializer(subscription)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+
+class PriceHistoryListView(generics.ListAPIView):
+    """Lists price history for a given subscription."""
+    serializer_class = PriceHistorySerializer
+
+    def get_queryset(self):
+        subscription_id = self.kwargs.get('pk')
+        return PriceHistory.objects.filter(subscription_id=subscription_id)

@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 
 class Subscription(models.Model):
@@ -21,3 +22,20 @@ class Subscription(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class PriceHistory(models.Model):
+    subscription = models.ForeignKey(
+        Subscription, related_name='price_history', on_delete=models.CASCADE
+    )
+    cost = models.DecimalField(max_digits=10, decimal_places=2)
+    billing_cycle = models.CharField(
+        max_length=10, choices=Subscription.BILLING_CYCLE_CHOICES
+    )
+    effective_date = models.DateField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-effective_date']
+
+    def __str__(self):
+        return f"{self.subscription.name} - {self.cost} ({self.billing_cycle}) on {self.effective_date}"

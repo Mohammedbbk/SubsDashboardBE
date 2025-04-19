@@ -1,11 +1,12 @@
 from django.db import models
 
+
 class Subscription(models.Model):
-    MONTHLY = 'monthly'
-    ANNUALLY = 'annually'
+    MONTHLY = "monthly"
+    ANNUALLY = "annually"
     BILLING_CYCLE_CHOICES = [
-        (MONTHLY, 'Monthly'),
-        (ANNUALLY, 'Annually'),
+        (MONTHLY, "Monthly"),
+        (ANNUALLY, "Annually"),
     ]
 
     name = models.CharField(max_length=100)

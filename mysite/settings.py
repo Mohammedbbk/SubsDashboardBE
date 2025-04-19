@@ -5,16 +5,16 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-load_dotenv(BASE_DIR / '.env')
+load_dotenv(BASE_DIR / ".env")
 
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     raise ValueError("No SECRET_KEY set for Django application")
 
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
-allowed_hosts_str = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost')
-ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',') if host.strip()]
+allowed_hosts_str = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost")
+ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(",") if host.strip()]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -23,15 +23,15 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    'rest_framework',
-    'corsheaders',
-    'subscriptions',
+    "rest_framework",
+    "corsheaders",
+    "subscriptions",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    'corsheaders.middleware.CorsMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -58,10 +58,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "mysite.wsgi.application"
 
-database_url = os.getenv('DATABASE_URL')
+database_url = os.getenv("DATABASE_URL")
 if not database_url:
     if DEBUG:
-        print("WARNING: DATABASE_URL environment variable not set. Falling back to SQLite for local development.")
+        print(
+            "WARNING: DATABASE_URL environment variable not set. Falling back to SQLite for local development."
+        )
         DATABASES = {
             "default": {
                 "ENGINE": "django.db.backends.sqlite3",
@@ -69,10 +71,12 @@ if not database_url:
             }
         }
     else:
-         raise ValueError("DATABASE_URL environment variable must be set in production (DEBUG=False).")
+        raise ValueError(
+            "DATABASE_URL environment variable must be set in production (DEBUG=False)."
+        )
 else:
     DATABASES = {
-        'default': dj_database_url.config(default=database_url, conn_max_age=600)
+        "default": dj_database_url.config(default=database_url, conn_max_age=600)
     }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -102,5 +106,9 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-cors_origins_str = os.getenv('CORS_ALLOWED_ORIGINS', 'http://127.0.0.1:5173,http://localhost:5173')
-CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins_str.split(',') if origin.strip()]
+cors_origins_str = os.getenv(
+    "CORS_ALLOWED_ORIGINS", "http://127.0.0.1:5173,http://localhost:5173"
+)
+CORS_ALLOWED_ORIGINS = [
+    origin.strip() for origin in cors_origins_str.split(",") if origin.strip()
+]

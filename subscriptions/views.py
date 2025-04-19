@@ -3,6 +3,9 @@ from rest_framework import generics, status, serializers
 from rest_framework.response import Response
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
+from django.db.models import Sum, Case, When, DecimalField, F
+from rest_framework.views import APIView
+from decimal import Decimal
 
 from .models import Subscription
 from .serializers import SubscriptionSerializer
@@ -57,3 +60,31 @@ class SubscriptionDestroy(generics.DestroyAPIView):
 
     queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
+
+
+class DashboardSummaryView(APIView):
+    """
+    Provides summary data for the dashboard, calculated via annotations.
+    """
+    def get(self, request, format=None):
+        # Calculate total monthly spend using database aggregation
+        monthly_cost_expression = Case(
+            When(billing_cycle=Subscription.ANNUALLY, then=F('cost') / 12),
+            When(billing_cycle=Subscription.MONTHLY, then=F('cost')),
+            default=Decimal(0),  # Handle potential other cases or nulls
+            output_field=DecimalField(max_digits=10, decimal_places=2)
+        )
+
+        aggregation_result = Subscription.objects.aggregate(
+            total_monthly_spend=Sum(
+                monthly_cost_expression,
+                output_field=DecimalField(max_digits=10, decimal_places=2)
+            )
+        )
+
+        total_monthly_spend = aggregation_result.get('total_monthly_spend') or Decimal(0)
+
+        summary_data = {
+            'total_monthly_spend': total_monthly_spend.quantize(Decimal("0.01")),
+        }
+        return Response(summary_data)
